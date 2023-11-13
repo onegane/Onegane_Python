@@ -8,6 +8,8 @@ import json
 used_codes = []
 data_list = []
 
+response = None
+
 try:
     f = open("qrbarcode_data.txt", "r", encoding="utf8")
     data_list = f.readlines()
@@ -30,17 +32,20 @@ while True:
 
     for code in pyzbar.decode(frame):
         cv2.imwrite('qrbarcode_image.png', frame)
-        my_code = code.data.decode('utf-8')
-        if my_code not in used_codes:
-            print("인식 성공:", my_code)
-            used_codes.append(my_code)
+        number = code.data.decode('utf-8')
+        if number not in used_codes:
+            print("인식 성공:", number)
+            print(type(number))
+            used_codes.append(number)
 
             # Send the code to the REST API
-            api_url = "http://10.150.150.179:8080/api/camera"
-            payload = {'code': my_code}
+            api_url = "https://api.onegane.kro.kr/api/parcel"
+            payload = {'number': number}
             jLoad = json.dumps(payload)
             response = requests.post(api_url, data=jLoad, headers=headerInfo)
-            if response.status_code == 200:
+            print(response)
+            print(response.status_code)
+            if response is not None and response.status_code == 200:
                 print("Code sent to API successfully!")
                 print(response.json())
             else:
@@ -48,7 +53,7 @@ while True:
                 print(response.json())
 
             f2 = open("qrbarcode_data.txt", "a", encoding="utf8")
-            f2.write(my_code + '\n')
+            f2.write(number + '\n')
             f2.close()
         else:
             print("이미 인식된 코드입니다.!!!")
